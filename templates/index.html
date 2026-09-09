@@ -2,20 +2,34 @@
 {% block title %}{{ site }}{% endblock %}
 {% block body %}
 <header class="post-head">
-  <div class="meta"><span class="chip brand">{{ latest.category }}</span><span class="eyebrow num">오늘 {{ latest.date }} {{ latest.weekday }}요일</span></div>
+  <div class="meta"><span class="chip brand">오늘의 대표 · {{ latest.category }}</span><span class="eyebrow num">{{ latest.date }} {{ latest.weekday }}요일</span></div>
   <h1>{{ latest.title }}</h1>
   <p><a href="posts/{{ latest.date }}.html">오늘 글 전체 보기 →</a></p>
 </header>
 
 <section>
-  <div class="sec-h"><h2>오늘의 골드박스 TOP 3</h2><span class="num">{{ latest.goldbox|length }}개 중</span></div>
+  <div class="sec-h"><h2>오늘의 골드박스 TOP 3</h2><a href="c/goldbox.html">{{ latest.goldbox|length }}개 전부 →</a></div>
   <div class="cards">
     {% for it in latest.goldbox[:3] %}{% with top = loop.first, rank_style = "gold" %}{% include "_card.html" %}{% endwith %}{% endfor %}
   </div>
 </section>
 
 <section>
-  <div class="sec-h"><h2>지난 글</h2><span>요일별 카테고리</span></div>
+  <div class="sec-h"><h2>카테고리별 1위</h2><span>탭에서 10위까지</span></div>
+  <ul class="catlist">
+    {% for c in cats %}
+    <li><a href="c/{{ c.slug }}.html">
+      <span class="cl-name">{{ c.name }}</span>
+      {% if c.top %}<span class="cl-top">{{ c.top.name }}</span><span class="cl-price num">{{ c.top.price|won }}원{% if c.top.sig.vs_yesterday is not none and c.top.sig.vs_yesterday < 0 %} <b class="delta down">▼{{ -c.top.sig.vs_yesterday }}%</b>{% endif %}</span>
+      {% else %}<span class="cl-top">수집 전</span>{% endif %}
+      {% if c.stale %}<span class="chip muted">{{ c.date }}</span>{% endif %}
+    </a></li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section>
+  <div class="sec-h"><h2>지난 글</h2><span>요일별 대표 카테고리</span></div>
   <ul class="archive">
     {% for p in posts %}
     <li><a href="posts/{{ p.date }}.html"><span class="num">{{ p.date }}</span> <span class="wd">{{ p.weekday }}</span> {{ p.category }} 베스트 10 + 골드박스 {{ p.goldbox|length }}</a></li>
@@ -25,6 +39,6 @@
 
 <section class="about">
   <h2>이 사이트는</h2>
-  <p>매일 아침 9시에 쿠팡 골드박스와 요일별 카테고리 베스트를 자동으로 모아 올립니다. 월 식품 · 화 주방 · 수 가전디지털 · 목 생활용품 · 금 뷰티 · 토 스포츠레저 · 일 반려동물. 매일 가격을 저장해서 <b>어제보다 얼마나 내렸는지</b>, <b>30일 최저가인지</b>를 같이 보여줍니다.</p>
+  <p>매일 아침 9시에 쿠팡 골드박스와 7개 카테고리 베스트를 자동으로 모아 올립니다. 매일 가격과 순위를 저장해서 <b>어제보다 얼마나 내렸는지</b>, <b>30일 최저가인지</b>, <b>순위가 얼마나 올랐는지</b>, <b>며칠째 TOP 10인지</b>를 같이 보여줍니다. 후기·평점은 쿠팡이 제공하지 않아 싣지 않습니다.</p>
 </section>
 {% endblock %}

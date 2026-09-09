@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}{{ site }}{% endblock %}</title>
-<meta name="description" content="{% block desc %}매일 아침 9시, 쿠팡 골드박스와 카테고리 베스트를 가격 변동과 함께.{% endblock %}">
+<meta name="description" content="{% block desc %}매일 아침 9시, 쿠팡 골드박스와 카테고리별 베스트를 가격·순위 변동과 함께.{% endblock %}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gothic+A1:wght@800;900&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="{{ root }}style.css">
@@ -12,6 +12,11 @@
 <body>
 <div class="wrap">
   <nav class="top"><a class="logo" href="{{ root }}index.html">{{ site }}</a><span class="tag">매일 09:00 갱신</span></nav>
+  <nav class="tabs" aria-label="카테고리">
+    <a href="{{ root }}index.html" class="{% if active == 'home' %}on{% endif %}">오늘</a>
+    <a href="{{ root }}c/goldbox.html" class="{% if active == 'goldbox' %}on{% endif %}">골드박스</a>
+    {% for t in tabs %}<a href="{{ root }}c/{{ t.slug }}.html" class="{% if active == t.slug %}on{% endif %}">{{ t.label }}</a>{% endfor %}
+  </nav>
   {% block body %}{% endblock %}
   <footer class="disclosure">{{ disclosure }} 가격은 게시 시점 기준이며 변동될 수 있습니다. 상품 정보·이미지는 쿠팡 파트너스 API가 제공합니다.</footer>
 </div>

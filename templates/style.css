@@ -23,6 +23,18 @@ a{color:var(--brand)}
 .top{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
 .logo{font-family:"Gothic A1",sans-serif;font-weight:900;font-size:20px;color:var(--ink);text-decoration:none;letter-spacing:-.02em}
 .tag{font-size:12px;color:var(--ink-3)}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tabs a{flex:0 0 auto;padding:7px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap}
+.tabs a.on{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.chip.good{background:var(--good-soft);color:var(--good)}
+.delta.good{color:var(--good)}
+.catlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.catlist a{display:grid;grid-template-columns:64px 1fr auto;gap:10px;align-items:center;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;color:var(--ink);text-decoration:none;font-size:13px}
+.catlist .cl-name{font-weight:800;color:var(--brand)}
+.catlist .cl-top{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.catlist .cl-price{font-weight:700;white-space:nowrap}
+.sec-h a{font-size:12px}
 .eyebrow{font-size:12px;letter-spacing:.04em;color:var(--ink-3);font-weight:500}
 .chip{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:700;line-height:1.3;white-space:nowrap}
 .chip.brand{background:var(--brand-soft);color:var(--brand)}

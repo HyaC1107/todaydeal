@@ -16,9 +16,11 @@
       </div>
       <div class="chips">
         {% if it.sig.low30 %}<span class="chip price">30일 최저가</span>{% endif %}
+        {% if it.rk.delta is not none and it.rk.delta > 0 %}<span class="chip good">순위 ▲{{ it.rk.delta }}</span>{% endif %}
+        {% if it.rk.new %}<span class="chip good">신규 진입</span>{% endif %}
+        {% if it.rk.streak >= 3 %}<span class="chip brand num">{{ it.rk.streak }}일째 TOP 10</span>{% endif %}
         {% if it.rocket %}<span class="chip muted">로켓배송</span>{% endif %}
         {% if it.free_shipping %}<span class="chip muted">무료배송</span>{% endif %}
-        {% if it.category %}<span class="chip muted">{{ it.category }}</span>{% endif %}
       </div>
     </div>
   </div>
