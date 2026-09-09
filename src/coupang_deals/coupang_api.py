@@ -18,6 +18,7 @@ import json
 import os
 from datetime import datetime, timezone
 from typing import Any
+from urllib.parse import quote, urlencode
 
 import httpx
 
@@ -58,7 +59,9 @@ class CoupangPartners:
 
     def _request(self, method: str, path: str, params: dict[str, Any] | None = None, body: Any = None) -> Any:
         full_path = BASE + path
-        query = "&".join(f"{k}={v}" for k, v in (params or {}).items() if v is not None)
+        # 서명 메시지와 실제 요청의 쿼리가 바이트 단위로 같아야 한다 → 한글 키워드도 여기서 한 번만 인코딩.
+        # (2026-09-10 실측: 인코딩 없이 보내면 검색 API가 401 "Invalid signature")
+        query = urlencode({k: v for k, v in (params or {}).items() if v is not None}, quote_via=quote)
         url = full_path + (f"?{query}" if query else "")
         headers = {"Authorization": self._auth_header(method, full_path, query), "Content-Type": "application/json"}
         r = self._http.request(method, url, headers=headers, content=json.dumps(body) if body is not None else None)
@@ -86,6 +89,34 @@ class CoupangPartners:
         if sub_id:
             body["subId"] = sub_id
         return self._request("POST", "/deeplink", body=body) or []
+
+    # ── 실적 리포트 (경로가 /v1 이 아니라 /reports 아래) ─────────────────
+    def _report(self, kind: str, start: str, end: str, page: int = 0) -> Any:
+        """kind: clicks | orders | cancels | commission. 날짜는 YYYYMMDD, 최대 31일 구간."""
+        path = f"/reports/{kind}"
+        base = "/v2/providers/affiliate_open_api/apis/openapi"
+        query = f"startDate={start}&endDate={end}&page={page}"
+        full = base + path
+        headers = {"Authorization": self._auth_header("GET", full, query)}
+        r = self._http.get(full + "?" + query, headers=headers)
+        if r.status_code != 200:
+            raise CoupangError(f"HTTP {r.status_code}: {r.text[:300]}")
+        data = r.json()
+        if str(data.get("rCode")) != "0":
+            raise CoupangError(f"rCode={data.get('rCode')} {data.get('rMessage')}")
+        return data.get("data")
+
+    def report_clicks(self, start: str, end: str, page: int = 0) -> Any:
+        return self._report("clicks", start, end, page)
+
+    def report_orders(self, start: str, end: str, page: int = 0) -> Any:
+        return self._report("orders", start, end, page)
+
+    def report_cancels(self, start: str, end: str, page: int = 0) -> Any:
+        return self._report("cancels", start, end, page)
+
+    def report_commission(self, start: str, end: str, page: int = 0) -> Any:
+        return self._report("commission", start, end, page)
 
     def close(self) -> None:
         self._http.close()
