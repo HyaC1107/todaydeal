@@ -13,3 +13,6 @@ wheels/
 .env
 .env.*
 !.env.example
+
+# 생성물 — Actions가 만든다
+site/

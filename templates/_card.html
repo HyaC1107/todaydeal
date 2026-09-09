@@ -1,0 +1,42 @@
+{# 상품 카드 하나. it = 상품 dict, rank_style = 'gold' | 'best' #}
+<article class="card{% if top %} top{% endif %}">
+  <div class="body">
+    <a class="thumb" href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">
+      <span class="rank num {{ rank_style }}">{{ it.rank }}</span>
+      {% if it.image %}<img src="{{ it.image }}" alt="" loading="lazy">{% endif %}
+    </a>
+    <div class="info">
+      <a class="name" href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">{{ it.name }}</a>
+      <div class="pricing num">
+        <span class="now">{{ it.price|won }}<small>원</small></span>
+        {% if it.sig.vs_yesterday is not none %}
+          {% if it.sig.vs_yesterday < 0 %}<span class="delta down">어제보다 ▼{{ -it.sig.vs_yesterday }}%</span>
+          {% else %}<span class="delta up">어제보다 ▲{{ it.sig.vs_yesterday }}%</span>{% endif %}
+        {% endif %}
+      </div>
+      <div class="chips">
+        {% if it.sig.low30 %}<span class="chip price">30일 최저가</span>{% endif %}
+        {% if it.rocket %}<span class="chip muted">로켓배송</span>{% endif %}
+        {% if it.free_shipping %}<span class="chip muted">무료배송</span>{% endif %}
+        {% if it.category %}<span class="chip muted">{{ it.category }}</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% if it.spark and it.spark|length >= 2 %}
+  {% set ps = it.spark|map(attribute=1)|list %}{% set lo = ps|min %}{% set hi = ps|max %}
+  <div class="trend">
+    <div class="t"><span>최근 {{ it.spark|length }}일 가격</span><span class="num">최저 {{ lo|won }} · 최고 {{ hi|won }}</span></div>
+    <svg viewBox="0 0 560 90" role="img" aria-label="가격 추이">
+      {% set n = it.spark|length %}{% set span = (hi - lo) if hi != lo else 1 %}
+      {% set pts = [] %}
+      {% for d, p in it.spark %}{% set x = 40 + (loop.index0 * 508 / (n - 1)) %}{% set y = 14 + (hi - p) * 56 / span %}{% set _ = pts.append(x|round(1)|string ~ ',' ~ y|round(1)|string) %}{% endfor %}
+      <line x1="40" y1="14" x2="548" y2="14" class="grid"/><line x1="40" y1="70" x2="548" y2="70" class="grid"/>
+      <text x="0" y="18">{{ (hi/10000)|round(1) }}만</text><text x="0" y="74">{{ (lo/10000)|round(1) }}만</text>
+      <polyline points="{{ pts|join(' ') }}" class="line"/>
+      <circle cx="{{ pts[-1].split(',')[0] }}" cy="{{ pts[-1].split(',')[1] }}" r="5" class="dot"/>
+      <text x="40" y="86">{{ it.spark[0][0][5:] }}</text><text x="548" y="86" text-anchor="end">오늘</text>
+    </svg>
+  </div>
+  {% endif %}
+  <a class="cta" href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">쿠팡에서 보기</a>
+</article>

@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% set root = "" %}
+{% block title %}{{ site }}{% endblock %}
+{% block body %}
+<header class="post-head">
+  <div class="meta"><span class="chip brand">{{ latest.category }}</span><span class="eyebrow num">오늘 {{ latest.date }} {{ latest.weekday }}요일</span></div>
+  <h1>{{ latest.title }}</h1>
+  <p><a href="posts/{{ latest.date }}.html">오늘 글 전체 보기 →</a></p>
+</header>
+
+<section>
+  <div class="sec-h"><h2>오늘의 골드박스 TOP 3</h2><span class="num">{{ latest.goldbox|length }}개 중</span></div>
+  <div class="cards">
+    {% for it in latest.goldbox[:3] %}{% with top = loop.first, rank_style = "gold" %}{% include "_card.html" %}{% endwith %}{% endfor %}
+  </div>
+</section>
+
+<section>
+  <div class="sec-h"><h2>지난 글</h2><span>요일별 카테고리</span></div>
+  <ul class="archive">
+    {% for p in posts %}
+    <li><a href="posts/{{ p.date }}.html"><span class="num">{{ p.date }}</span> <span class="wd">{{ p.weekday }}</span> {{ p.category }} 베스트 10 + 골드박스 {{ p.goldbox|length }}</a></li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="about">
+  <h2>이 사이트는</h2>
+  <p>매일 아침 9시에 쿠팡 골드박스와 요일별 카테고리 베스트를 자동으로 모아 올립니다. 월 식품 · 화 주방 · 수 가전디지털 · 목 생활용품 · 금 뷰티 · 토 스포츠레저 · 일 반려동물. 매일 가격을 저장해서 <b>어제보다 얼마나 내렸는지</b>, <b>30일 최저가인지</b>를 같이 보여줍니다.</p>
+</section>
+{% endblock %}
