@@ -17,8 +17,9 @@
     <a href="{{ root }}c/goldbox.html" class="{% if active == 'goldbox' %}on{% endif %}">골드박스</a>
     {% for t in tabs %}<a href="{{ root }}c/{{ t.slug }}.html" class="{% if active == t.slug %}on{% endif %}">{{ t.label }}</a>{% endfor %}
   </nav>
+  <p class="disc-top">{{ disclosure_top }}</p>
   {% block body %}{% endblock %}
-  <footer class="disclosure">{{ disclosure }} 가격은 게시 시점 기준이며 변동될 수 있습니다. 상품 정보·이미지는 쿠팡 파트너스 API가 제공합니다.</footer>
+  <footer class="disclosure">{{ disclosure }} {{ obs_note }} 가격은 게시 시점 기준이며 변동될 수 있습니다. 상품 정보·이미지는 쿠팡 파트너스 API가 제공합니다.</footer>
 </div>
 </body>
 </html>

@@ -1,12 +1,16 @@
 """매일 1회 수집 — 골드박스 + 카테고리 7종 전부 → data/snapshots/YYYY-MM-DD.json + 가격·순위 이력.
 
-API 호출은 하루 최대 8회(골드박스 1 + 카테고리 7). 카테고리 하나가 실패해도 나머지는 살린다 —
-실패한 탭은 렌더 단계에서 가장 최근 성공분을 쓴다. 호출 한도는 미실측이라 실패 사유를 스냅샷에 남긴다.
+API 호출은 하루 최대 8회(골드박스 1 + 카테고리 7) + 저녁 골드박스 재조회 1회. 카테고리 하나가 실패해도
+나머지는 살린다 — 실패한 탭은 렌더 단계에서 가장 최근 성공분을 쓴다.
+
+가격 이력 항목: [date, price, vendorItemId]. 같은 productId라도 옵션·판매자(vendorItemId)가 다르면
+다른 가격이므로, 비교는 vendorItemId가 같은 관측끼리만 한다(2026-09-10 챗또리 자문 반영).
 """
 
 from __future__ import annotations
 
 import json
+import re
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -18,10 +22,10 @@ KST = timezone(timedelta(hours=9))
 ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "data"
 SNAPSHOTS = DATA / "snapshots"
+EVENING = DATA / "goldbox-evening"
 PRICES = DATA / "prices.json"
 RANKS = DATA / "ranks.json"
 
-#: 탭 순서. (카테고리명, URL 슬러그, 짧은 라벨)
 TABS: list[tuple[str, str, str]] = [
     ("식품", "food", "식품"),
     ("주방용품", "kitchen", "주방"),
@@ -33,22 +37,28 @@ TABS: list[tuple[str, str, str]] = [
 ]
 SLUG_OF = {name: slug for name, slug, _ in TABS}
 
-#: 요일(월=0) → 오늘의 대표 카테고리. PM 지정: 월 식품·수 가전·금 뷰티, 나머지는 클또리 임시 배정.
 WEEKDAY_CATEGORY: dict[int, str] = {
     0: "식품", 1: "주방용품", 2: "가전디지털", 3: "생활용품", 4: "뷰티", 5: "스포츠레저", 6: "반려동물용품",
 }
 WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
 HISTORY_DAYS = 120
-CALL_GAP_SEC = 1.5  # 호출 사이 간격 — 한도 실측 전 보수적으로
+CALL_GAP_SEC = 1.5
+
+
+def _vendor_item_id(url: str) -> str:
+    m = re.search(r"vendorItemId=(\d+)", url or "")
+    return m.group(1) if m else ""
 
 
 def _slim(it: dict[str, Any]) -> dict[str, Any]:
+    url = it.get("productUrl") or ""
     return {
         "id": str(it.get("productId")),
+        "vid": _vendor_item_id(url),
         "name": str(it.get("productName", "")).strip(),
         "price": int(float(it.get("productPrice") or 0)),
         "image": it.get("productImage"),
-        "url": it.get("productUrl"),
+        "url": url,
         "rocket": bool(it.get("isRocket")),
         "free_shipping": bool(it.get("isFreeShipping")),
         "rank": int(it.get("rank") or 0),
@@ -66,12 +76,11 @@ def _update_prices(prices: dict[str, Any], items: list[dict[str, Any]], today: s
         rec = prices.setdefault(it["id"], {"name": it["name"], "history": []})
         rec["name"] = it["name"]
         hist = [h for h in rec["history"] if h[0] != today and h[0] >= cutoff]
-        hist.append([today, it["price"]])
+        hist.append([today, it["price"], it.get("vid", "")])
         rec["history"] = sorted(hist)
 
 
 def _update_ranks(ranks: dict[str, Any], cat: str, items: list[dict[str, Any]], today: str) -> None:
-    """ranks[cat][pid] = [[date, rank], ...] (최근 HISTORY_DAYS일)."""
     cutoff = (datetime.strptime(today, "%Y-%m-%d") - timedelta(days=HISTORY_DAYS)).strftime("%Y-%m-%d")
     bucket = ranks.setdefault(cat, {})
     for it in items:
@@ -126,6 +135,21 @@ def collect(now: datetime | None = None) -> Path:
         _update_ranks(ranks, cat, lst, today)
     PRICES.write_text(json.dumps(prices, ensure_ascii=False), encoding="utf-8")
     RANKS.write_text(json.dumps(ranks, ensure_ascii=False), encoding="utf-8")
+    return out
+
+
+def refresh_goldbox(now: datetime | None = None) -> Path:
+    """저녁 재조회(1회) — 아침 가격을 그대로 재전송하지 않기 위해. data/goldbox-evening/YYYY-MM-DD.json"""
+    now = now or datetime.now(KST)
+    today = now.strftime("%Y-%m-%d")
+    api = CoupangPartners()
+    try:
+        items = [_slim(x) for x in api.goldbox(sub_id="goldbox")]
+    finally:
+        api.close()
+    EVENING.mkdir(parents=True, exist_ok=True)
+    out = EVENING / f"{today}.json"
+    out.write_text(json.dumps({"date": today, "collected_at": now.strftime("%Y-%m-%d %H:%M"), "goldbox": items}, ensure_ascii=False, indent=1), encoding="utf-8")
     return out
 
 

@@ -23,6 +23,7 @@ a{color:var(--brand)}
 .top{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
 .logo{font-family:"Gothic A1",sans-serif;font-weight:900;font-size:20px;color:var(--ink);text-decoration:none;letter-spacing:-.02em}
 .tag{font-size:12px;color:var(--ink-3)}
+.disc-top{margin:0;font-size:12px;color:var(--ink-3);padding:4px 0 0}
 .verdict{font-size:13px;font-weight:700;padding:4px 8px;border-radius:6px;display:inline-block}
 .verdict.low{background:var(--price-soft);color:var(--price)}
 .verdict.near{background:var(--good-soft);color:var(--good)}

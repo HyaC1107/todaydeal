@@ -1,4 +1,4 @@
-# 매일 11:00 UTC(20:00 KST) — 골드박스 자정 마감 3시간 전 텔레그램. API 호출 없음(아침 스냅샷 재사용).
+# 매일 11:13 UTC(20:13 KST) — 골드박스 재조회(API 1회) 후 아침보다 안 오른 것만 텔레그램. 없으면 안 보냄.
 # Secrets: TELEGRAM_BOT_TOKEN · TELEGRAM_CHANNEL_ID · (선택) SITE_URL. 토큰 없으면 드라이런만 찍고 끝.
 name: evening
 
@@ -19,8 +19,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.0.1
       - run: uv sync
-      - name: 텔레그램 저녁 (골드박스 마감)
+      - name: 텔레그램 저녁 (골드박스 재조회 후, 안 오른 것만)
         env:
+          COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
+          COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
           SITE_URL: ${{ secrets.SITE_URL }}

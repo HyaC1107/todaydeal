@@ -24,6 +24,9 @@ SITE = ROOT / "site"
 TEMPLATES = ROOT / "templates"
 SITE_NAME = "오늘딜"
 DISCLOSURE = "이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다."
+# 표시광고 심사지침: 문자 매체는 첫 부분에 경제적 이해관계 표시. 상단·하단 둘 다 넣어 위치 논쟁을 없앤다.
+DISCLOSURE_TOP = "광고 · 쿠팡 파트너스 링크로 구매 시 수수료를 받습니다"
+OBS_NOTE = "가격·순위는 매일 09:17 KST 1회 관측한 값이며, \"최저가\"는 이 사이트가 저장한 기간 안에서 같은 판매자·옵션끼리 비교한 것입니다."
 CTA = "쿠팡에서 가격 확인"
 
 
@@ -45,7 +48,23 @@ def with_sub_id(url: str, sub: str) -> str:
 
 
 # ── 신호 ──────────────────────────────────────────────────────────────
-def _price_signals(prices: dict[str, Any], pid: str, price: int, today: str) -> dict[str, Any]:
+LEGACY_UNTIL = "2026-09-10"  # 이 날짜 이전 이력엔 vendorItemId가 없다(같은 productUrl 관측이라 동일 판매자로 간주)
+
+
+def _same_item_history(rec: dict[str, Any], vid: str, today: str) -> list[tuple[str, int]]:
+    """같은 판매자·옵션(vendorItemId)의 관측만. 옵션이 바뀐 상품을 같은 가격선에 놓지 않는다."""
+    out = []
+    for h in rec.get("history", []):
+        d, p = h[0], h[1]
+        if d > today:
+            continue
+        h_vid = h[2] if len(h) > 2 else ""
+        if h_vid == vid or (not h_vid and d <= LEGACY_UNTIL) or not vid:
+            out.append((d, p))
+    return out
+
+
+def _price_signals(prices: dict[str, Any], pid: str, price: int, today: str, vid: str = "") -> dict[str, Any]:
     """가격 이력 → 카드 신호 + 판정 한 줄. 이력이 하루면 조용히(첫날엔 아무 말 안 함)."""
     out: dict[str, Any] = {
         "vs_yesterday": None, "low30": False, "days": 0,
@@ -54,7 +73,7 @@ def _price_signals(prices: dict[str, Any], pid: str, price: int, today: str) -> 
     rec = prices.get(pid)
     if not rec:
         return out
-    hist = [(d, p) for d, p in rec["history"] if d <= today]
+    hist = _same_item_history(rec, vid, today)
     out["days"] = len(hist)
     if len(hist) < 2:
         return out
@@ -72,15 +91,16 @@ def _price_signals(prices: dict[str, Any], pid: str, price: int, today: str) -> 
     pct = round((price - mn) / mn * 100)
     out["pct_over_min"] = pct
     n = len(hist)
-    # 판정 — 데이터로만 말한다. "쿠팡 최저가"가 아니라 "우리가 본 N일 중".
+    span_days = (datetime.strptime(today, "%Y-%m-%d") - datetime.strptime(hist[0][0], "%Y-%m-%d")).days + 1
+    # 판정 — 데이터로만 말한다. "쿠팡 최저가"가 아니라 "우리가 본 기간·관측 횟수 중". 매일 아침 1회 관측.
     if price <= mn:
-        out["verdict"], out["verdict_kind"] = f"우리가 본 {n}일 중 최저가", "low"
+        out["verdict"], out["verdict_kind"] = f"우리가 본 {span_days}일(관측 {n}회) 중 최저가", "low"
     elif pct <= 3:
-        out["verdict"], out["verdict_kind"] = f"최저가와 거의 같음 (+{pct}%)", "near"
+        out["verdict"], out["verdict_kind"] = f"{span_days}일 최저가와 거의 같음 (+{pct}%)", "near"
     elif pct <= 10:
-        out["verdict"], out["verdict_kind"] = f"최저가보다 {pct}% 비쌈", "mid"
+        out["verdict"], out["verdict_kind"] = f"{span_days}일 최저가보다 {pct}% 비쌈", "mid"
     else:
-        out["verdict"], out["verdict_kind"] = f"최저가보다 {pct}% 비쌈 — 기다리는 게 나음", "high"
+        out["verdict"], out["verdict_kind"] = f"{span_days}일 최저가보다 {pct}% 비쌈 — 기다리는 게 나음", "high"
     return out
 
 
@@ -104,14 +124,14 @@ def _rank_signals(ranks: dict[str, Any], cat: str, pid: str, rank: int, today: s
     return out
 
 
-def _spark(prices: dict[str, Any], pid: str, today: str) -> list[tuple[str, int]]:
+def _spark(prices: dict[str, Any], pid: str, today: str, vid: str = "") -> list[tuple[str, int]]:
     rec = prices.get(pid)
-    return [(d, p) for d, p in rec["history"] if d <= today][-30:] if rec else []
+    return _same_item_history(rec, vid, today)[-30:] if rec else []
 
 
 def _decorate(items: list[dict[str, Any]], prices: dict[str, Any], ranks: dict[str, Any], cat: str | None, today: str, sub: str) -> None:
     for it in items:
-        it["sig"] = _price_signals(prices, it["id"], it["price"], today)
+        it["sig"] = _price_signals(prices, it["id"], it["price"], today, it.get("vid", ""))
         it["rk"] = _rank_signals(ranks, cat, it["id"], it["rank"], today) if cat else {"delta": None, "streak": 1, "new": False}
         it["link"] = with_sub_id(it.get("url", ""), sub)
 
@@ -174,11 +194,11 @@ def decorate_day(d: dict[str, Any], prices: dict[str, Any], ranks: dict[str, Any
     _decorate(d["goldbox"], prices, ranks, None, today, f"{sub_prefix}-gold")
     _decorate(d["best"], prices, ranks, d["category"], today, f"{sub_prefix}-best")
     if d["goldbox"]:
-        d["goldbox"][0]["spark"] = _spark(prices, d["goldbox"][0]["id"], today)
+        d["goldbox"][0]["spark"] = _spark(prices, d["goldbox"][0]["id"], today, d["goldbox"][0].get("vid", ""))
     picks = [dict(x) for x in pick_top3(d["goldbox"], d["best"])]
     for p in picks:
         p["link"] = with_sub_id(p.get("url", ""), f"{sub_prefix}-pick")
-        p["spark"] = _spark(prices, p["id"], today)
+        p["spark"] = _spark(prices, p["id"], today, p.get("vid", ""))
     d["picks"] = picks
     allitems = d["goldbox"] + d["best"]
     d["summary"] = {
@@ -203,7 +223,7 @@ def render() -> None:
     (SITE / ".nojekyll").write_text("", encoding="utf-8")
 
     tabs = [{"name": n, "slug": s, "label": l} for n, s, l in TABS]
-    common = {"site": SITE_NAME, "disclosure": DISCLOSURE, "tabs": tabs, "cta": CTA}
+    common = {"site": SITE_NAME, "disclosure": DISCLOSURE, "disclosure_top": DISCLOSURE_TOP, "obs_note": OBS_NOTE, "tabs": tabs, "cta": CTA}
 
     posts = [decorate_day(d, prices, ranks, sub_prefix="web") for d in snaps]
     latest = posts[-1]
@@ -220,7 +240,7 @@ def render() -> None:
         items = [dict(x) for x in items]
         _decorate(items, prices, ranks, n, date or today, "web-cat")
         if items:
-            items[0]["spark"] = _spark(prices, items[0]["id"], date or today)
+            items[0]["spark"] = _spark(prices, items[0]["id"], date or today, items[0].get("vid", ""))
         stale = bool(date and date != today)
         cat_meta.append({"name": n, "slug": s, "label": l, "date": date, "count": len(items), "stale": stale, "top": items[0] if items else None})
         (SITE / "c" / f"{s}.html").write_text(

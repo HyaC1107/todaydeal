@@ -1,4 +1,5 @@
 {# 일일 다이제스트 글 본문 (워드프레스) #}
+<p style="font-size:12px;color:#7B8794;margin:0 0 8px">{{ disclosure_top }}</p>
 <p style="color:#4E5968">
   {% if post.summary.drop or post.summary.low %}어제보다 내린 상품 {{ post.summary.drop }}개{% if post.summary.low %}, 우리가 본 기간 중 최저가 {{ post.summary.low }}개{% endif %}.{% else %}가격·순위 판정은 내일부터 붙습니다 — 오늘이 첫 수집입니다.{% endif %}
   가격은 {{ post.collected_at[11:] }} 기준이고 자정 전에 바뀔 수 있습니다.
@@ -41,4 +42,4 @@
 </table>
 </div>
 
-<p style="font-size:12px;color:#7B8794;border-top:1px solid #E3E7ED;padding-top:10px;margin-top:20px">{{ disclosure }} 가격은 게시 시점 기준이며 변동될 수 있습니다. "최저가"는 이 사이트가 저장한 기간 안에서의 비교이며 다른 판매처와의 비교가 아닙니다. 상품 정보·이미지는 쿠팡 파트너스 API가 제공합니다. 후기·평점은 쿠팡이 제공하지 않아 싣지 않습니다.</p>
+<p style="font-size:12px;color:#7B8794;border-top:1px solid #E3E7ED;padding-top:10px;margin-top:20px">{{ disclosure }} {{ obs_note }} 가격은 게시 시점 기준이며 변동될 수 있습니다. 상품 정보·이미지는 쿠팡 파트너스 API가 제공합니다. 후기·평점은 쿠팡이 제공하지 않아 싣지 않습니다.</p>
