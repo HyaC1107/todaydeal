@@ -1,6 +1,9 @@
-"""워드프레스 REST API 최소 클라이언트 — 응용 프로그램 비밀번호(Basic 인증).
+"""워드프레스 REST 클라이언트 — 두 가지 모드.
 
-필요한 것: 사이트 주소, 사용자명, 응용 프로그램 비밀번호(관리자 → 사용자 → 프로필 하단).
+A) 자체 호스팅(카페24 등): WP_URL + WP_USER + WP_APP_PASSWORD (Basic, 응용 프로그램 비밀번호)
+B) WordPress.com 호스팅형:  WPCOM_SITE(예: luvssol.wordpress.com) + WPCOM_TOKEN (OAuth2 Bearer)
+   → https://public-api.wordpress.com/wp/v2/sites/<site>/... (2026-09-10 실측: 사이트 직접 /wp-json 은 404)
+
 카테고리·태그는 이름으로 찾고 없으면 만든다. 글은 slug 로 찾아 있으면 갱신, 없으면 생성(멱등).
 """
 
@@ -18,25 +21,32 @@ class WPError(RuntimeError):
 
 
 class WordPress:
-    def __init__(self, url: str | None = None, user: str | None = None, app_password: str | None = None, timeout: float = 30.0):
-        self.url = (url or os.environ.get("WP_URL", "")).rstrip("/")
-        user = user or os.environ.get("WP_USER", "")
-        pw = app_password or os.environ.get("WP_APP_PASSWORD", "")
-        if not (self.url and user and pw):
-            raise WPError("WP_URL / WP_USER / WP_APP_PASSWORD 가 비어 있다 (.env 확인)")
-        token = base64.b64encode(f"{user}:{pw}".encode()).decode()
-        self._http = httpx.Client(
-            headers={"Authorization": f"Basic {token}", "User-Agent": "todaydeal-bot/0.1"},
-            timeout=timeout,
-            follow_redirects=True,
-        )
-        # /wp-json 은 고유주소 리라이트가 살아 있어야 열린다. 안 열리면(공유호스팅·.htaccess 미생성)
-        # 어디서나 되는 ?rest_route= 로 간다. (2026-09-10 로컬 실측: wp-cli 로 고유주소만 바꾸면 /wp-json 404)
-        self._pretty = self._probe()
+    def __init__(self, timeout: float = 30.0):
+        wpcom_site = os.environ.get("WPCOM_SITE", "").strip()
+        wpcom_token = os.environ.get("WPCOM_TOKEN", "").strip()
+        headers = {"User-Agent": "todaydeal-bot/0.2"}
+        if wpcom_site and wpcom_token:
+            self.mode = "wpcom"
+            self.url = f"https://{wpcom_site}"
+            self._api = f"https://public-api.wordpress.com/wp/v2/sites/{wpcom_site}"
+            headers["Authorization"] = f"Bearer {wpcom_token}"
+            self._pretty = True
+        else:
+            url = os.environ.get("WP_URL", "").rstrip("/")
+            user = os.environ.get("WP_USER", "")
+            pw = os.environ.get("WP_APP_PASSWORD", "")
+            if not (url and user and pw):
+                raise WPError("WPCOM_SITE+WPCOM_TOKEN 또는 WP_URL+WP_USER+WP_APP_PASSWORD 가 필요하다 (.env 확인)")
+            self.mode = "selfhosted"
+            self.url = url
+            self._api = url + "/wp-json/wp/v2"
+            headers["Authorization"] = "Basic " + base64.b64encode(f"{user}:{pw}".encode()).decode()
+            self._pretty = None  # 첫 요청에서 판별
+        self._http = httpx.Client(headers=headers, timeout=timeout, follow_redirects=True)
 
     def _probe(self) -> bool:
         try:
-            r = self._http.get(self.url + "/wp-json/wp/v2/types", params={"_fields": "post"})
+            r = self._http.get(self._api + "/types", params={"_fields": "post"})
             r.json()
             return r.status_code == 200
         except Exception:
@@ -44,9 +54,11 @@ class WordPress:
 
     def _u(self, path: str, params: dict[str, Any] | None) -> tuple[str, dict[str, Any]]:
         params = dict(params or {})
+        if self._pretty is None:
+            self._pretty = self._probe()
         if self._pretty:
-            return self.url + "/wp-json/wp/v2" + path, params
-        params["rest_route"] = "/wp/v2" + path
+            return self._api + path, params
+        params["rest_route"] = "/wp/v2" + path  # 자체호스팅에서 고유주소 리라이트가 죽었을 때
         return self.url + "/", params
 
     def _req(self, method: str, path: str, **kw: Any) -> Any:
@@ -59,15 +71,11 @@ class WordPress:
         except ValueError:
             raise WPError(f"{method} {path} → JSON 아님 (HTTP {r.status_code}): {r.text[:200]!r}") from None
 
-    # ── 확인 ────────────────────────────────────────────────────────────
     def me(self) -> dict[str, Any]:
         return self._req("GET", "/users/me", params={"context": "edit"})
 
-    # ── 분류 ────────────────────────────────────────────────────────────
     def ensure_term(self, kind: str, name: str, slug: str | None = None, parent: int | None = None) -> int:
-        """kind: 'categories' | 'tags'. 이름(또는 slug)으로 찾고 없으면 생성 → id."""
-        params: dict[str, Any] = {"search": name, "per_page": 100}
-        for t in self._req("GET", f"/{kind}", params=params):
+        for t in self._req("GET", f"/{kind}", params={"search": name, "per_page": 100}):
             if t["name"] == name or (slug and t["slug"] == slug):
                 return int(t["id"])
         body: dict[str, Any] = {"name": name}
@@ -77,14 +85,12 @@ class WordPress:
             body["parent"] = parent
         return int(self._req("POST", f"/{kind}", json=body)["id"])
 
-    # ── 글/페이지 (slug 멱등) ───────────────────────────────────────────
     def _find(self, kind: str, slug: str) -> dict[str, Any] | None:
         rows = self._req("GET", f"/{kind}", params={"slug": slug, "status": "publish,draft,future,private", "per_page": 1, "context": "edit"})
         return rows[0] if rows else None
 
     def upsert(self, kind: str, slug: str, title: str, content: str, *, status: str = "publish", categories: list[int] | None = None,
                tags: list[int] | None = None, excerpt: str | None = None, date: str | None = None, extra: dict[str, Any] | None = None) -> dict[str, Any]:
-        """kind: 'posts' | 'pages'. 같은 slug 가 있으면 내용만 갱신한다."""
         body: dict[str, Any] = {"slug": slug, "title": title, "content": content, "status": status}
         if categories is not None and kind == "posts":
             body["categories"] = categories
@@ -93,7 +99,7 @@ class WordPress:
         if excerpt is not None:
             body["excerpt"] = excerpt
         if date:
-            body["date"] = date  # 사이트 로컬 시각 "YYYY-MM-DDTHH:MM:SS"
+            body["date"] = date
         if extra:
             body.update(extra)
         found = self._find(kind, slug)
