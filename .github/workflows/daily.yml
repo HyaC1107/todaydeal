@@ -6,8 +6,12 @@ name: daily
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    # 00:00 UTC 정각은 GitHub 크론이 가장 밀리는 슬롯(2026-09-10 실측: 48분 지나도 미실행) → 정각 회피
+    - cron: "17 0 * * *"   # 09:17 KST
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths-ignore: ["data/**"]   # 봇의 data 커밋으로 다시 도는 루프 방지 — 코드 변경만 재배포
 
 permissions:
   contents: write
