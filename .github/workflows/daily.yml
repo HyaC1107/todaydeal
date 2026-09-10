@@ -1,4 +1,7 @@
-# 매일 00:00 UTC(09:00 KST) 수집 → data/ 커밋 → 사이트 생성 → GitHub Pages 배포
+# 매일 00:00 UTC(09:00 KST) 수집 → data/ 커밋 → (워드프레스 게시) → 정적 사이트 GitHub Pages 배포
+#
+# 워드프레스 게시는 Secrets에 WP_URL 이 있을 때만 돈다. 없으면 건너뛰고 Pages만 배포한다.
+# 필요한 Secrets: COUPANG_ACCESS_KEY · COUPANG_SECRET_KEY · (선택) WP_URL · WP_USER · WP_APP_PASSWORD
 name: daily
 
 on:
@@ -20,18 +23,27 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TZ: Asia/Seoul
+      HAS_WP: ${{ secrets.WP_URL != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.0.1
       - run: uv sync
 
-      - name: 수집 + 사이트 생성
+      - name: 수집 + 정적 사이트 생성
         env:
           COUPANG_ACCESS_KEY: ${{ secrets.COUPANG_ACCESS_KEY }}
           COUPANG_SECRET_KEY: ${{ secrets.COUPANG_SECRET_KEY }}
         run: uv run python scripts/daily.py
 
-      - name: 가격 이력·스냅샷 커밋
+      - name: 워드프레스 게시 (WP_URL 있을 때만)
+        if: env.HAS_WP == 'true'
+        env:
+          WP_URL: ${{ secrets.WP_URL }}
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+        run: uv run python scripts/post_wp.py
+
+      - name: 가격·순위 이력·스냅샷 커밋
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -41,7 +53,7 @@ jobs:
             git push
           fi
 
-      - uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v7
         with:
           path: site/
 

@@ -1,0 +1,39 @@
+# 로컬 워드프레스 — 자동 포스팅 실측용. 진짜 호스팅이 생기면 .env 만 바꾼다.
+#   docker compose -f local-wp/docker-compose.yml up -d
+#   http://localhost:8088
+services:
+  db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: wordpress
+      MARIADB_USER: wp
+      MARIADB_PASSWORD: wp
+      MARIADB_ROOT_PASSWORD: root
+    volumes:
+      - db:/var/lib/mysql
+  wp:
+    image: wordpress:6
+    depends_on: [db]
+    ports: ["8088:80"]
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+    volumes:
+      - wp:/var/www/html
+  cli:
+    image: wordpress:cli
+    depends_on: [wp]
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wp
+      WORDPRESS_DB_PASSWORD: wp
+    volumes:
+      - wp:/var/www/html
+    entrypoint: ["sleep", "infinity"]
+volumes:
+  db:
+  wp:

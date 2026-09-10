@@ -1,0 +1,28 @@
+{# 일일 다이제스트 글 본문 (워드프레스) #}
+<p style="color:#4E5968">
+  {% if post.summary.drop or post.summary.low %}어제보다 내린 상품 {{ post.summary.drop }}개{% if post.summary.low %}, 30일 최저가 {{ post.summary.low }}개{% endif %}.{% else %}가격·순위 변동 표시는 내일부터 붙습니다 — 오늘이 첫 수집입니다.{% endif %}
+  가격은 {{ post.collected_at[11:] }} 기준이고 자정 전에 바뀔 수 있습니다.
+</p>
+
+<h2>오늘의 골드박스 <small style="font-weight:400;color:#7B8794">{{ post.goldbox|length }}개 · 오늘만</small></h2>
+{% for it in post.goldbox %}{% with gold = true %}{% include "_wp_card.html" %}{% endwith %}{% endfor %}
+
+<h2>{{ post.weekday }}요일 · {{ post.category }} 베스트 10</h2>
+{% for it in post.best %}{% with gold = false %}{% include "_wp_card.html" %}{% endwith %}{% endfor %}
+
+<h2>{{ post.category }} 베스트 한눈에</h2>
+<div style="overflow-x:auto">
+<table style="border-collapse:collapse;width:100%;min-width:520px;font-size:13px">
+  <thead><tr style="background:#EEF1F5;color:#7B8794;font-size:12px"><th style="padding:8px 10px;text-align:left">순위</th><th style="padding:8px 10px;text-align:left">상품</th><th style="padding:8px 10px;text-align:right">가격</th><th style="padding:8px 10px;text-align:right">어제 대비</th><th style="padding:8px 10px;text-align:left">배송</th></tr></thead>
+  <tbody>
+  {% for it in post.best %}
+    <tr><td style="padding:8px 10px;border-top:1px solid #E3E7ED">{{ it.rank }}</td><td style="padding:8px 10px;border-top:1px solid #E3E7ED"><a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">{{ it.name }}</a></td>
+        <td style="padding:8px 10px;border-top:1px solid #E3E7ED;text-align:right"><b>{{ it.price|won }}</b></td>
+        <td style="padding:8px 10px;border-top:1px solid #E3E7ED;text-align:right">{% if it.sig.vs_yesterday is none %}–{% elif it.sig.vs_yesterday < 0 %}<span style="color:#D6293E;font-weight:900">▼{{ -it.sig.vs_yesterday }}%</span>{% else %}▲{{ it.sig.vs_yesterday }}%{% endif %}</td>
+        <td style="padding:8px 10px;border-top:1px solid #E3E7ED">{{ "로켓" if it.rocket else ("무료" if it.free_shipping else "") }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<p style="font-size:12px;color:#7B8794;border-top:1px solid #E3E7ED;padding-top:10px;margin-top:20px">{{ disclosure }} 가격은 게시 시점 기준이며 변동될 수 있습니다. 상품 정보·이미지는 쿠팡 파트너스 API가 제공합니다. 후기·평점은 쿠팡이 제공하지 않아 싣지 않습니다.</p>

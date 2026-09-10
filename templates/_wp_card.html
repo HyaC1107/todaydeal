@@ -1,0 +1,40 @@
+{# 워드프레스용 카드 — 외부 CSS 없이 인라인만. it = 상품 dict #}
+{% set red = "#D6293E" %}{% set teal = "#0E6B6B" %}{% set ink = "#1B2430" %}{% set mute = "#6B7785" %}{% set line = "#E3E7ED" %}
+<div style="border:1px solid {{ line }};border-radius:14px;overflow:hidden;background:#fff;margin:0 0 12px">
+  <div style="display:flex;gap:14px;padding:14px;align-items:flex-start">
+    <a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank" style="position:relative;flex:0 0 96px;width:96px;height:96px;border:1px solid {{ line }};border-radius:10px;overflow:hidden;background:#fff;display:block">
+      <span style="position:absolute;left:0;top:0;width:28px;height:28px;line-height:28px;text-align:center;background:{{ red if gold else ink }};color:#fff;font-weight:900;font-size:13px;border-bottom-right-radius:10px">{{ it.rank }}</span>
+      {% if it.image %}<img src="{{ it.image }}" alt="" loading="lazy" style="width:96px;height:96px;object-fit:contain;display:block;margin:0">{% endif %}
+    </a>
+    <div style="flex:1;min-width:0">
+      <a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank" style="display:block;color:{{ ink }};font-weight:700;font-size:14px;line-height:1.35;text-decoration:none;margin-bottom:6px">{{ it.name }}</a>
+      <div style="margin-bottom:6px"><span style="font-weight:900;font-size:22px;color:{{ ink }};letter-spacing:-.02em">{{ it.price|won }}<span style="font-size:13px">원</span></span>
+        {% if it.sig.vs_yesterday is not none %}{% if it.sig.vs_yesterday < 0 %}<span style="margin-left:8px;color:{{ red }};font-weight:900">어제보다 ▼{{ -it.sig.vs_yesterday }}%</span>{% else %}<span style="margin-left:8px;color:{{ mute }};font-weight:700">어제보다 ▲{{ it.sig.vs_yesterday }}%</span>{% endif %}{% endif %}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:12px;font-weight:700">
+        {% if it.sig.low30 %}<span style="padding:3px 9px;border-radius:999px;background:#FBE4E7;color:{{ red }}">30일 최저가</span>{% endif %}
+        {% if it.rk.delta is not none and it.rk.delta > 0 %}<span style="padding:3px 9px;border-radius:999px;background:#DEF3E6;color:#1E7F4F">순위 ▲{{ it.rk.delta }}</span>{% endif %}
+        {% if it.rk.new %}<span style="padding:3px 9px;border-radius:999px;background:#DEF3E6;color:#1E7F4F">신규 진입</span>{% endif %}
+        {% if it.rk.streak >= 3 %}<span style="padding:3px 9px;border-radius:999px;background:#DDF0EE;color:{{ teal }}">{{ it.rk.streak }}일째 TOP 10</span>{% endif %}
+        {% if it.rocket %}<span style="padding:3px 9px;border-radius:999px;background:#EEF1F5;color:#4E5968">로켓배송</span>{% endif %}
+        {% if it.free_shipping %}<span style="padding:3px 9px;border-radius:999px;background:#EEF1F5;color:#4E5968">무료배송</span>{% endif %}
+      </div>
+    </div>
+  </div>
+  {% if it.spark and it.spark|length >= 2 %}
+  {% set ps = it.spark|map(attribute=1)|list %}{% set lo = ps|min %}{% set hi = ps|max %}
+  <div style="margin:0 14px;padding:8px 12px 4px;border:1px solid {{ line }};border-radius:10px">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:#4E5968"><span>최근 {{ it.spark|length }}일 가격</span><span>최저 {{ lo|won }} · 최고 {{ hi|won }}</span></div>
+    <svg viewBox="0 0 560 90" style="width:100%;height:auto;display:block" role="img" aria-label="가격 추이">
+      {% set n = it.spark|length %}{% set span = (hi - lo) if hi != lo else 1 %}{% set pts = [] %}
+      {% for d, p in it.spark %}{% set x = 40 + (loop.index0 * 508 / (n - 1)) %}{% set y = 14 + (hi - p) * 56 / span %}{% set _ = pts.append(x|round(1)|string ~ ',' ~ y|round(1)|string) %}{% endfor %}
+      <line x1="40" y1="14" x2="548" y2="14" stroke="{{ line }}"/><line x1="40" y1="70" x2="548" y2="70" stroke="{{ line }}"/>
+      <text x="0" y="18" font-size="10" fill="{{ mute }}">{{ (hi/10000)|round(1) }}만</text><text x="0" y="74" font-size="10" fill="{{ mute }}">{{ (lo/10000)|round(1) }}만</text>
+      <polyline points="{{ pts|join(' ') }}" fill="none" stroke="{{ teal }}" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="{{ pts[-1].split(',')[0] }}" cy="{{ pts[-1].split(',')[1] }}" r="5" fill="{{ red }}"/>
+      <text x="40" y="86" font-size="10" fill="{{ mute }}">{{ it.spark[0][0][5:] }}</text><text x="548" y="86" font-size="10" fill="{{ mute }}" text-anchor="end">오늘</text>
+    </svg>
+  </div>
+  {% endif %}
+  <a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank" style="display:block;margin:12px 14px 14px;padding:12px;border-radius:10px;background:{{ teal }};color:#fff;text-align:center;font-weight:700;text-decoration:none;font-size:15px">쿠팡에서 보기</a>
+</div>
