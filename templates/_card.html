@@ -1,12 +1,12 @@
-{# 상품 카드 하나. it = 상품 dict, rank_style = 'gold' | 'best' #}
+{# 상품 카드 하나. it = 상품 dict, rank_style = 'gold' | 'best', top = 강조, goldbox = 자정 마감 표시 #}
 <article class="card{% if top %} top{% endif %}">
   <div class="body">
-    <a class="thumb" href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">
+    <a class="thumb" href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank">
       <span class="rank num {{ rank_style }}">{{ it.rank }}</span>
       {% if it.image %}<img src="{{ it.image }}" alt="" loading="lazy">{% endif %}
     </a>
     <div class="info">
-      <a class="name" href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">{{ it.name }}</a>
+      <a class="name" href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank">{{ it.name }}</a>
       <div class="pricing num">
         <span class="now">{{ it.price|won }}<small>원</small></span>
         {% if it.sig.vs_yesterday is not none %}
@@ -14,8 +14,10 @@
           {% else %}<span class="delta up">어제보다 ▲{{ it.sig.vs_yesterday }}%</span>{% endif %}
         {% endif %}
       </div>
+      {% if it.sig.verdict %}<div class="verdict {{ it.sig.verdict_kind }}">{{ it.sig.verdict }}</div>{% endif %}
       <div class="chips">
-        {% if it.sig.low30 %}<span class="chip price">30일 최저가</span>{% endif %}
+        {% if goldbox %}<span class="chip price">오늘 자정 마감</span>{% endif %}
+        {% if it.sig.low30 and it.sig.verdict_kind != 'low' %}<span class="chip price">30일 중 최저</span>{% endif %}
         {% if it.rk.delta is not none and it.rk.delta > 0 %}<span class="chip good">순위 ▲{{ it.rk.delta }}</span>{% endif %}
         {% if it.rk.new %}<span class="chip good">신규 진입</span>{% endif %}
         {% if it.rk.streak >= 3 %}<span class="chip brand num">{{ it.rk.streak }}일째 TOP 10</span>{% endif %}
@@ -40,5 +42,5 @@
     </svg>
   </div>
   {% endif %}
-  <a class="cta" href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">쿠팡에서 보기</a>
+  <a class="cta" href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank">{{ cta }}</a>
 </article>

@@ -24,6 +24,7 @@ jobs:
     env:
       TZ: Asia/Seoul
       HAS_WP: ${{ secrets.WP_URL != '' }}
+      HAS_TG: ${{ secrets.TELEGRAM_BOT_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.0.1
@@ -42,6 +43,14 @@ jobs:
           WP_USER: ${{ secrets.WP_USER }}
           WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
         run: uv run python scripts/post_wp.py
+
+      - name: 텔레그램 아침 (오늘의 3개, 토큰 있을 때만)
+        if: env.HAS_TG == 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: uv run python scripts/notify_telegram.py am
 
       - name: 가격·순위 이력·스냅샷 커밋
         run: |

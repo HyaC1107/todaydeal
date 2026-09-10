@@ -1,20 +1,21 @@
-{# 워드프레스용 카드 — 외부 CSS 없이 인라인만. it = 상품 dict #}
-{% set red = "#D6293E" %}{% set teal = "#0E6B6B" %}{% set ink = "#1B2430" %}{% set mute = "#6B7785" %}{% set line = "#E3E7ED" %}
+{# 워드프레스용 카드 — 인라인만. it = 상품 dict, gold = 골드박스(자정 마감 표시) #}
+{% set red = "#D6293E" %}{% set teal = "#0E6B6B" %}{% set ink = "#1B2430" %}{% set mute = "#6B7785" %}{% set line = "#E3E7ED" %}{% set green = "#1E7F4F" %}
 <div style="border:1px solid {{ line }};border-radius:14px;overflow:hidden;background:#fff;margin:0 0 12px">
   <div style="display:flex;gap:14px;padding:14px;align-items:flex-start">
-    <a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank" style="position:relative;flex:0 0 96px;width:96px;height:96px;border:1px solid {{ line }};border-radius:10px;overflow:hidden;background:#fff;display:block">
+    <a href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank" style="position:relative;flex:0 0 96px;width:96px;height:96px;border:1px solid {{ line }};border-radius:10px;overflow:hidden;background:#fff;display:block">
       <span style="position:absolute;left:0;top:0;width:28px;height:28px;line-height:28px;text-align:center;background:{{ red if gold else ink }};color:#fff;font-weight:900;font-size:13px;border-bottom-right-radius:10px">{{ it.rank }}</span>
       {% if it.image %}<img src="{{ it.image }}" alt="" loading="lazy" style="width:96px;height:96px;object-fit:contain;display:block;margin:0">{% endif %}
     </a>
     <div style="flex:1;min-width:0">
-      <a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank" style="display:block;color:{{ ink }};font-weight:700;font-size:14px;line-height:1.35;text-decoration:none;margin-bottom:6px">{{ it.name }}</a>
+      <a href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank" style="display:block;color:{{ ink }};font-weight:700;font-size:14px;line-height:1.35;text-decoration:none;margin-bottom:6px">{{ it.name }}</a>
       <div style="margin-bottom:6px"><span style="font-weight:900;font-size:22px;color:{{ ink }};letter-spacing:-.02em">{{ it.price|won }}<span style="font-size:13px">원</span></span>
         {% if it.sig.vs_yesterday is not none %}{% if it.sig.vs_yesterday < 0 %}<span style="margin-left:8px;color:{{ red }};font-weight:900">어제보다 ▼{{ -it.sig.vs_yesterday }}%</span>{% else %}<span style="margin-left:8px;color:{{ mute }};font-weight:700">어제보다 ▲{{ it.sig.vs_yesterday }}%</span>{% endif %}{% endif %}
       </div>
+      {% if it.sig.verdict %}<div style="display:inline-block;margin-bottom:6px;padding:4px 8px;border-radius:6px;font-size:13px;font-weight:700;{% if it.sig.verdict_kind == 'low' %}background:#FBE4E7;color:{{ red }}{% elif it.sig.verdict_kind == 'near' %}background:#DEF3E6;color:{{ green }}{% else %}background:#EEF1F5;color:{{ mute }}{% endif %}">{{ it.sig.verdict }}</div>{% endif %}
       <div style="display:flex;flex-wrap:wrap;gap:6px;font-size:12px;font-weight:700">
-        {% if it.sig.low30 %}<span style="padding:3px 9px;border-radius:999px;background:#FBE4E7;color:{{ red }}">30일 최저가</span>{% endif %}
-        {% if it.rk.delta is not none and it.rk.delta > 0 %}<span style="padding:3px 9px;border-radius:999px;background:#DEF3E6;color:#1E7F4F">순위 ▲{{ it.rk.delta }}</span>{% endif %}
-        {% if it.rk.new %}<span style="padding:3px 9px;border-radius:999px;background:#DEF3E6;color:#1E7F4F">신규 진입</span>{% endif %}
+        {% if gold %}<span style="padding:3px 9px;border-radius:999px;background:#FBE4E7;color:{{ red }}">오늘 자정 마감</span>{% endif %}
+        {% if it.rk.delta is not none and it.rk.delta > 0 %}<span style="padding:3px 9px;border-radius:999px;background:#DEF3E6;color:{{ green }}">순위 ▲{{ it.rk.delta }}</span>{% endif %}
+        {% if it.rk.new %}<span style="padding:3px 9px;border-radius:999px;background:#DEF3E6;color:{{ green }}">신규 진입</span>{% endif %}
         {% if it.rk.streak >= 3 %}<span style="padding:3px 9px;border-radius:999px;background:#DDF0EE;color:{{ teal }}">{{ it.rk.streak }}일째 TOP 10</span>{% endif %}
         {% if it.rocket %}<span style="padding:3px 9px;border-radius:999px;background:#EEF1F5;color:#4E5968">로켓배송</span>{% endif %}
         {% if it.free_shipping %}<span style="padding:3px 9px;border-radius:999px;background:#EEF1F5;color:#4E5968">무료배송</span>{% endif %}
@@ -36,5 +37,5 @@
     </svg>
   </div>
   {% endif %}
-  <a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank" style="display:block;margin:12px 14px 14px;padding:12px;border-radius:10px;background:{{ teal }};color:#fff;text-align:center;font-weight:700;text-decoration:none;font-size:15px">쿠팡에서 보기</a>
+  <a href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank" style="display:block;margin:12px 14px 14px;padding:12px;border-radius:10px;background:{{ teal }};color:#fff;text-align:center;font-weight:700;text-decoration:none;font-size:15px">{{ cta }}</a>
 </div>

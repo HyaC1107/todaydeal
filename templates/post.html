@@ -1,31 +1,30 @@
 {% extends "base.html" %}{% set root = "../" %}
 {% block title %}{{ post.title }} · {{ post.date }} · {{ site }}{% endblock %}
-{% block desc %}{{ post.date }} {{ post.weekday }}요일 {{ post.category }} 베스트와 골드박스. 어제 대비 가격 변동 표시.{% endblock %}
+{% block desc %}{{ post.date }} {{ post.weekday }}요일 {{ post.category }} 베스트와 골드박스. 우리가 본 기간 중 최저가 판정, 어제 대비 가격·순위 변동.{% endblock %}
 {% block body %}
 <header class="post-head">
   <div class="meta"><span class="chip brand">{{ post.category }}</span><span class="eyebrow num">{{ post.date }} {{ post.weekday }}요일 · {{ post.collected_at[11:] }} 수집</span></div>
   <h1>{{ post.title }}</h1>
   <p>
-    {% if post.summary.drop or post.summary.low %}
-      어제보다 내린 상품 {{ post.summary.drop }}개{% if post.summary.low %}, 30일 최저가 {{ post.summary.low }}개{% endif %}.
-    {% else %}
-      가격 변동 표시는 내일부터 붙습니다 — 오늘이 첫 수집입니다.
-    {% endif %}
+    {% if post.summary.drop or post.summary.low %}어제보다 내린 상품 {{ post.summary.drop }}개{% if post.summary.low %}, 우리가 본 기간 중 최저가 {{ post.summary.low }}개{% endif %}.
+    {% else %}가격·순위 판정은 내일부터 붙습니다 — 오늘이 첫 수집입니다.{% endif %}
     가격은 오늘 아침 기준이고 자정 전에 바뀔 수 있습니다.
   </p>
 </header>
 
+{% with picks = post.picks %}{% include "_picks.html" %}{% endwith %}
+
 <section>
-  <div class="sec-h"><h2>오늘의 골드박스</h2><span class="num">{{ post.goldbox|length }}개 · 오늘만</span></div>
+  <div class="sec-h"><h2>오늘의 골드박스</h2><span class="num">{{ post.goldbox|length }}개 · 자정 마감</span></div>
   <div class="cards">
-    {% for it in post.goldbox %}{% with top = loop.first, rank_style = "gold" %}{% include "_card.html" %}{% endwith %}{% endfor %}
+    {% for it in post.goldbox %}{% with top = loop.first, rank_style = "gold", goldbox = true %}{% include "_card.html" %}{% endwith %}{% endfor %}
   </div>
 </section>
 
 <section>
   <div class="sec-h"><h2>{{ post.weekday }}요일 · {{ post.category }} 베스트 10</h2><span>지금 가장 많이 팔리는 순</span></div>
   <div class="cards">
-    {% for it in post.best %}{% with top = false, rank_style = "best" %}{% include "_card.html" %}{% endwith %}{% endfor %}
+    {% for it in post.best %}{% with top = false, rank_style = "best", goldbox = false %}{% include "_card.html" %}{% endwith %}{% endfor %}
   </div>
 </section>
 
@@ -33,12 +32,13 @@
   <div class="sec-h"><h2>{{ post.category }} 베스트 한눈에</h2><span class="num">{{ post.date }} 기준</span></div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>순위</th><th>상품</th><th class="r">가격</th><th class="r">어제 대비</th><th>배송</th></tr></thead>
+      <thead><tr><th>순위</th><th>상품</th><th class="r">가격</th><th class="r">어제 대비</th><th>판정</th><th>배송</th></tr></thead>
       <tbody class="num">
       {% for it in post.best %}
-        <tr><td>{{ it.rank }}</td><td class="wrapcell"><a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">{{ it.name }}</a></td>
+        <tr><td>{{ it.rank }}</td><td class="wrapcell"><a href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank">{{ it.name }}</a></td>
             <td class="r"><b>{{ it.price|won }}</b></td>
             <td class="r">{% if it.sig.vs_yesterday is none %}–{% elif it.sig.vs_yesterday < 0 %}<span class="delta down">▼{{ -it.sig.vs_yesterday }}%</span>{% else %}<span class="delta up">▲{{ it.sig.vs_yesterday }}%</span>{% endif %}</td>
+            <td>{{ it.sig.verdict or "–" }}</td>
             <td>{{ "로켓" if it.rocket else ("무료" if it.free_shipping else "") }}</td></tr>
       {% endfor %}
       </tbody>
@@ -46,4 +46,15 @@
   </div>
 </section>
 <p class="back"><a href="../c/{{ post.slug }}.html">{{ post.category }} 탭에서 매일 갱신 →</a> · <a href="../index.html">다른 날 보기</a></p>
+
+{% if post.picks %}
+<div class="sticky" id="sticky">
+  <span class="st-name">{{ post.picks[0].name }}</span>
+  <a class="st-cta" href="{{ post.picks[0].link }}" rel="nofollow sponsored noopener" target="_blank">{{ cta }}</a>
+</div>
+<script>
+(function(){var s=document.getElementById('sticky');if(!s)return;var shown=false;
+window.addEventListener('scroll',function(){var y=window.scrollY||0;var on=y>600;if(on!==shown){shown=on;s.classList.toggle('on',on);}},{passive:true});})();
+</script>
+{% endif %}
 {% endblock %}

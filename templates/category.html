@@ -1,31 +1,31 @@
 {% extends "base.html" %}{% set root = "../" %}
 {% block title %}{{ cat.name }} 베스트 · {{ site }}{% endblock %}
-{% block desc %}쿠팡 {{ cat.name }} 베스트 상품, 매일 갱신. 어제 대비 가격·순위 변동과 30일 최저가 표시.{% endblock %}
+{% block desc %}쿠팡 {{ cat.name }} 베스트 상품, 매일 갱신. 우리가 본 기간 중 최저가 판정, 어제 대비 가격·순위 변동.{% endblock %}
 {% block body %}
 <header class="post-head">
   <div class="meta"><span class="chip brand">{{ cat.name }}</span>
     <span class="eyebrow num">{% if cat.date %}{{ cat.date }} 기준{% if cat.stale %} · 오늘 수집 실패로 최근 성공분{% endif %}{% else %}아직 수집 전{% endif %}</span></div>
   <h1>{% if cat.is_goldbox %}오늘의 골드박스{% else %}{{ cat.name }} 베스트 {{ cat.products|length }}{% endif %}</h1>
-  <p>{% if cat.is_goldbox %}오늘만 할인하는 상품입니다. 자정에 바뀝니다.{% else %}지금 가장 많이 팔리는 순서입니다. 매일 아침 순위·가격을 저장해서 변동을 표시합니다.{% endif %}</p>
+  <p>{% if cat.is_goldbox %}오늘만 할인하는 상품입니다. <b>오늘 자정에 끝납니다.</b>{% else %}지금 가장 많이 팔리는 순서입니다. 매일 아침 순위·가격을 저장해서 변동과 최저가 여부를 표시합니다.{% endif %}</p>
 </header>
 
 {% if cat.products %}
 <div class="cards">
-  {% for it in cat.products %}{% with top = loop.first, rank_style = ("gold" if cat.is_goldbox else "best") %}{% include "_card.html" %}{% endwith %}{% endfor %}
+  {% for it in cat.products %}{% with top = loop.first, rank_style = ("gold" if cat.is_goldbox else "best"), goldbox = cat.is_goldbox %}{% include "_card.html" %}{% endwith %}{% endfor %}
 </div>
 
 <section>
   <div class="sec-h"><h2>한눈에</h2><span class="num">{{ cat.date }} 기준</span></div>
   <div class="table-wrap">
     <table>
-      <thead><tr><th>순위</th><th>상품</th><th class="r">가격</th><th class="r">어제 대비</th><th class="r">순위 변동</th><th>배송</th></tr></thead>
+      <thead><tr><th>순위</th><th>상품</th><th class="r">가격</th><th class="r">어제 대비</th><th>판정</th><th class="r">순위 변동</th></tr></thead>
       <tbody class="num">
       {% for it in cat.products %}
-        <tr><td>{{ it.rank }}</td><td class="wrapcell"><a href="{{ it.url }}" rel="nofollow sponsored noopener" target="_blank">{{ it.name }}</a></td>
+        <tr><td>{{ it.rank }}</td><td class="wrapcell"><a href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank">{{ it.name }}</a></td>
             <td class="r"><b>{{ it.price|won }}</b></td>
             <td class="r">{% if it.sig.vs_yesterday is none %}–{% elif it.sig.vs_yesterday < 0 %}<span class="delta down">▼{{ -it.sig.vs_yesterday }}%</span>{% else %}<span class="delta up">▲{{ it.sig.vs_yesterday }}%</span>{% endif %}</td>
-            <td class="r">{% if it.rk.delta is none %}{% if it.rk.new %}신규{% else %}–{% endif %}{% elif it.rk.delta > 0 %}<span class="delta good">▲{{ it.rk.delta }}</span>{% elif it.rk.delta < 0 %}<span class="delta up">▼{{ -it.rk.delta }}</span>{% else %}=</td>{% endif %}</td>
-            <td>{{ "로켓" if it.rocket else ("무료" if it.free_shipping else "") }}</td></tr>
+            <td>{{ it.sig.verdict or "–" }}</td>
+            <td class="r">{% if it.rk.delta is none %}{% if it.rk.new %}신규{% else %}–{% endif %}{% elif it.rk.delta > 0 %}<span class="delta good">▲{{ it.rk.delta }}</span>{% elif it.rk.delta < 0 %}<span class="delta up">▼{{ -it.rk.delta }}</span>{% else %}={% endif %}</td></tr>
       {% endfor %}
       </tbody>
     </table>

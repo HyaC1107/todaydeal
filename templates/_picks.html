@@ -1,0 +1,16 @@
+{# 오늘의 3개 — 25개 나열 앞에 고른 셋. picks = list #}
+<section class="picks">
+  <div class="sec-h"><h2>오늘의 3개</h2><span>{% if picks and picks[0].sig.verdict %}가격·순위 신호로 고름{% else %}첫 수집 — 골드박스 상위{% endif %}</span></div>
+  <div class="pickrow">
+    {% for it in picks %}
+    <a class="pick" href="{{ it.link }}" rel="nofollow sponsored noopener" target="_blank">
+      <span class="pk-n num">{{ loop.index }}</span>
+      {% if it.image %}<img src="{{ it.image }}" alt="" loading="lazy">{% endif %}
+      <span class="pk-name">{{ it.name }}</span>
+      <span class="pk-price num">{{ it.price|won }}원{% if it.sig.vs_yesterday is not none and it.sig.vs_yesterday < 0 %} <b class="delta down">▼{{ -it.sig.vs_yesterday }}%</b>{% endif %}</span>
+      {% if it.sig.verdict %}<span class="pk-verdict {{ it.sig.verdict_kind }}">{{ it.sig.verdict }}</span>{% endif %}
+      <span class="pk-cta">{{ cta }} →</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>

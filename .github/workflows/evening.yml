@@ -1,0 +1,27 @@
+# 매일 11:00 UTC(20:00 KST) — 골드박스 자정 마감 3시간 전 텔레그램. API 호출 없음(아침 스냅샷 재사용).
+# Secrets: TELEGRAM_BOT_TOKEN · TELEGRAM_CHANNEL_ID · (선택) SITE_URL. 토큰 없으면 드라이런만 찍고 끝.
+name: evening
+
+on:
+  schedule:
+    - cron: "0 11 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    env:
+      TZ: Asia/Seoul
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.0.1
+      - run: uv sync
+      - name: 텔레그램 저녁 (골드박스 마감)
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHANNEL_ID: ${{ secrets.TELEGRAM_CHANNEL_ID }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: uv run python scripts/notify_telegram.py pm
