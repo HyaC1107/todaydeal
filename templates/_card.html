@@ -15,6 +15,7 @@
         {% endif %}
       </div>
       {% if it.sig.verdict %}<div class="verdict {{ it.sig.verdict_kind }}">{{ it.sig.verdict }}</div>{% endif %}
+      <div class="unit-note">구성·옵션·최종가는 쿠팡에서 확인</div>
       <div class="chips">
         {% if goldbox %}<span class="chip price">오늘 자정 마감</span>{% endif %}
         {% if it.sig.low30 and it.sig.verdict_kind != 'low' %}<span class="chip price">30일 중 최저</span>{% endif %}

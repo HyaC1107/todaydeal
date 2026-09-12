@@ -110,6 +110,7 @@ nav.top{display:flex;justify-content:space-between;align-items:center;gap:10px 1
 .now{font-family:var(--head);font-size:26px;color:var(--ink)}
 .now small{font-size:13px;margin-left:1px}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
+.unit-note{font-family:var(--hand);font-weight:700;font-size:13.5px;color:var(--text-faint)}
 /* 가격 추이 */
 .trend{margin:0 14px;padding:10px 12px 6px;border:2px dashed var(--ink-soft);border-radius:12px;display:flex;flex-direction:column;gap:4px;background:var(--paper)}
 .trend .t{display:flex;justify-content:space-between;font-family:var(--hand);font-weight:700;font-size:15px;color:var(--text-dim)}

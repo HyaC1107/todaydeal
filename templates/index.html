@@ -3,8 +3,8 @@
 {% block body %}
 <header class="post-head">
   <div class="meta"><span class="chip brand">오늘의 대표 · {{ latest.category }}</span><span class="eyebrow num">{{ latest.date }} {{ latest.weekday }}요일</span></div>
-  <h1>쿠팡 가격, 내렸을 때만 알려드립니다</h1>
-  <p>매일 아침 9시 골드박스와 7개 카테고리 베스트를 저장하고, <b>우리가 본 기간 중 최저가인지</b> 판정합니다. <a href="posts/{{ latest.date }}.html">오늘 글 전체 →</a></p>
+  <h1>쿠팡 가격을 매일 기록하고, 내린 것에 표시를 붙입니다</h1>
+  <p>매일 아침 9시 골드박스와 7개 카테고리 베스트의 가격·순위를 저장하고, <b>어제보다 내렸는지·우리가 본 기간 중 최저가인지</b> 표시합니다. 구성·옵션·최종가는 쿠팡 페이지에서 확인하세요. <a href="posts/{{ latest.date }}.html">오늘 글 전체 →</a></p>
 </header>
 
 {% with picks = latest.picks %}{% include "_picks.html" %}{% endwith %}
