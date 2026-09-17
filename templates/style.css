@@ -145,3 +145,7 @@ td.r,th.r{text-align:right}
 .back{margin:0;font-family:var(--hand);font-weight:700;font-size:17px}
 .back a{color:var(--ink);text-decoration:none;background:linear-gradient(transparent 55%,var(--marker) 55%);padding:0 2px}
 .disclosure{font-family:var(--hand);font-weight:700;font-size:15px;color:var(--text-faint);line-height:1.6;padding:14px 0 0;border-top:3px dashed var(--ink-soft)}
+.visitor-counter{margin:24px 0 16px;padding:16px;border:2px solid var(--ink-soft);border-radius:14px;background:var(--paper);text-align:center;line-height:1.7}
+.visitor-counter[hidden]{display:none}
+.visitor-counter strong{white-space:nowrap;color:var(--ink);background:linear-gradient(transparent 55%,var(--marker) 55%)}
+.visitor-counter small{display:block;color:var(--text-faint);font-size:12px}

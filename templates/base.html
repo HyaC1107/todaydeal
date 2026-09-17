@@ -21,6 +21,13 @@
   </nav>
   <p class="disc-top">{{ disclosure_top }}</p>
   {% block body %}{% endblock %}
+  {% if counter_code %}
+  <aside class="visitor-counter" data-counter-code="{{ counter_code }}" hidden aria-label="방문 통계">
+    <span>🐹 오늘딜에 다녀간 발걸음 <strong data-visitor-total></strong></span>
+    <small>누적 방문 · 같은 브라우저 하루 1회 기준 · 최대 4시간 지연</small>
+  </aside>
+  <script defer src="{{ root }}visitors.js"></script>
+  {% endif %}
   <footer class="disclosure">{{ disclosure }} {{ obs_note }} 가격은 게시 시점 기준이며 변동될 수 있습니다. 상품 정보·이미지는 쿠팡 파트너스 API가 제공합니다.</footer>
 </div>
 </body>

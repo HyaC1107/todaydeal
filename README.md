@@ -190,3 +190,31 @@ site/                    생성된 정적 사이트 · Git 제외
 상품 구매 링크는 쿠팡 파트너스 링크를 포함합니다. 링크를 통한 구매에 따라 운영자에게 일정액의 수수료가 제공될 수 있습니다. 사이트·WordPress 콘텐츠·Telegram 메시지에는 제휴 고지 문구가 포함됩니다.
 
 API 키, WordPress 인증 정보, Telegram 토큰은 공개 저장소에 커밋하지 않습니다. 결제 시점의 가격·옵션·배송 조건은 판매 페이지를 기준으로 확인하세요.
+
+## 방문 카운터
+
+`site-settings.json`의 `goatcounter_code`에 GoatCounter 사이트 코드를 입력하면
+홈·카테고리·일별 글 하단에 사이트 공통 누적 방문 수를 표시합니다.
+빈 값이면 집계 스크립트와 카운터 UI를 모두 비활성화합니다.
+
+1. [GoatCounter](https://www.goatcounter.com/)에서 오늘딜용 사이트를 생성합니다.
+2. 사이트 설정에서 **Allow adding visitor counts on your website**를 켭니다.
+3. 예를 들어 주소가 `my-todaydeal.goatcounter.com`이면 코드는 `my-todaydeal`입니다.
+   API 토큰이나 비밀번호를 저장하지 않습니다.
+4. 설정 변경을 커밋한 뒤 `deploy-site` Actions를 수동 실행합니다.
+   코드만 반영할 때 커밋 메시지에 `[skip ci]`를 넣으면 기존 daily의 자동 실행을 막고,
+   `deploy-site`로 상품 재수집·텔레그램 발송 없이 저장된 데이터만 배포할 수 있습니다.
+
+집계 기준은 한국 시간 하루에 브라우저당 한 번입니다. 날짜 표식을 브라우저 저장소에
+저장하고 실제 누적 숫자는 GoatCounter에 보관합니다. 새로고침이나 카테고리 이동으로
+중복 집계하지 않으며, Web Locks 지원 브라우저에서는 동시에 연 탭도 직렬 처리합니다.
+저장소 접근이 차단되면 해당 브라우저는 집계하지 않습니다. 기기·브라우저 변경,
+시크릿 창, 저장소 삭제, 차단 프로그램과 서비스의 중복·봇 필터 때문에 실제 사람 수와는
+다를 수 있습니다. 방문 기록 수이며 고유 인원 수나 과거 방문 통계가 아닙니다.
+
+표시는 서비스 캐시 때문에 [최대 4시간 지연](https://www.goatcounter.com/help/visitor-counter)될 수 있습니다.
+연결 실패·공개 설정 미완료 시 숫자를 임의로 표시하지 않고 카운터를 숨깁니다.
+운영 주소 `hyac1107.github.io/todaydeal/`에서만 집계하므로 로컬 미리보기는 제외됩니다.
+도메인을 변경하면 `templates/visitors.js`의 운영 주소 조건도 변경해야 합니다.
+
+검증: `node --test tests/visitors.test.cjs` (날짜 변경, 중복 방문, 장애, 미리보기 제외).

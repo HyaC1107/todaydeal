@@ -211,6 +211,10 @@ def decorate_day(d: dict[str, Any], prices: dict[str, Any], ranks: dict[str, Any
 
 
 def render() -> None:
+    settings = _load(ROOT / "site-settings.json")
+    counter_code = settings.get("goatcounter_code", "")
+    if counter_code and not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,61}[a-z0-9]|[a-z0-9]", counter_code):
+        raise ValueError("goatcounter_code는 GoatCounter 사이트 코드만 입력하세요")
     env = Environment(loader=FileSystemLoader(str(TEMPLATES)), autoescape=select_autoescape(["html"]))
     env.filters["won"] = _won
     prices, ranks, snaps = build_context()
@@ -220,10 +224,12 @@ def render() -> None:
     (SITE / "posts").mkdir(parents=True)
     (SITE / "c").mkdir()
     shutil.copy(TEMPLATES / "style.css", SITE / "style.css")
+    shutil.copy(TEMPLATES / "visitors.js", SITE / "visitors.js")
     (SITE / ".nojekyll").write_text("", encoding="utf-8")
 
     tabs = [{"name": n, "slug": s, "label": l} for n, s, l in TABS]
     common = {"site": SITE_NAME, "disclosure": DISCLOSURE, "disclosure_top": DISCLOSURE_TOP, "obs_note": OBS_NOTE, "tabs": tabs, "cta": CTA}
+    common["counter_code"] = counter_code
 
     posts = [decorate_day(d, prices, ranks, sub_prefix="web") for d in snaps]
     latest = posts[-1]
